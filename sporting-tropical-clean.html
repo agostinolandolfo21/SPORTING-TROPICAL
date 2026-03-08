@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Prenota il tuo campo da calcetto allo Sporting Tropical di Frattamaggiore">
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>Sporting Tropical - Prenota Campo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --danger: #ef4444;
+            --bg-light: #f0fdf4;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 20px;
+        }
+
+        h1 { color: var(--primary); font-size: 2.5em; margin-bottom: 10px; }
+        .subtitle { color: #333; font-size: 1.1em; }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .date-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .date-btn {
+            padding: 15px 25px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .date-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .fields-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .field-card {
+            background: var(--bg-light);
+            border-radius: 15px;
+            padding: 20px;
+            border: 3px solid var(--primary);
+        }
+
+        .field-card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .time-slot {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            border: 2px solid transparent;
+        }
+
+        .time-slot.free {
+            background: var(--primary);
+            color: white;
+        }
+
+        .time-slot.free:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .time-slot.occupied {
+            background: #fee2e2;
+            color: var(--danger);
+            cursor: not-allowed;
+            border-color: var(--danger);
+        }
+
+        .time-slot.selected {
+            border: 3px solid #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+        }
+
+        .booking-form {
+            background: var(--bg-light);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .booking-form.active { display: block; }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: #3b82f6; color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-cancel { background: #6b7280; color: white; margin-left: 10px; }
+
+        .admin-login {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: var(--bg-light);
+            border-radius: 15px;
+        }
+
+        .admin-panel { display: none; }
+        .admin-panel.active { display: block; }
+
+        .booking-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .booking-info { flex: 1; }
+        .booking-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .container { padding: 20px; }
+            .fields-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚽ SPORTING TROPICAL</h1>
+            <p class="subtitle">📍 Via Sepano n°4, Frattamaggiore (NA)</p>
+            <p class="subtitle">📞 339 453 2426</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" id="tabBooking">📅 Prenota Campo</button>
+            <button class="tab" id="tabAdmin">🔐 Gestione</button>
+        </div>
+
+        <!-- BOOKING TAB -->
+        <div id="bookingTab" class="tab-content active">
+            <h2 style="margin-bottom: 20px;">Seleziona Data:</h2>
+            <div class="date-selector" id="dateSelector"></div>
+            <div class="fields-container" id="fieldsContainer"></div>
+
+            <div class="booking-form" id="bookingForm">
+                <h2 style="margin-bottom: 20px; color: var(--primary);">📝 Completa Prenotazione</h2>
+                <div id="selectedInfo" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
+                
+                <div class="form-group">
+                    <label>Nome e Cognome *</label>
+                    <input type="text" id="customerName" placeholder="Mario Rossi">
+                </div>
+                
+                <div class="form-group">
+                    <label>Telefono *</label>
+                    <input type="tel" id="customerPhone" placeholder="333 123 4567">
+                </div>
+
+                <div>
+                    <button class="btn btn-primary" id="btnConfirm">✅ Conferma</button>
+                    <button class="btn btn-cancel" id="btnCancel">❌ Annulla</button>
+                </div>
+            </div>
+
+            <div id="message"></div>
+        </div>
+
+        <!-- ADMIN TAB -->
+        <div id="adminTab" class="tab-content">
+            <div class="admin-login" id="adminLogin">
+                <h2 style="margin-bottom: 20px; text-align: center; color: var(--primary);">🔐 Accesso</h2>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="adminPassword">
+                </div>
+                <button class="btn btn-primary" id="btnLogin" style="width: 100%;">Accedi</button>
+                <p style="margin-top: 15px; font-size: 0.9em; color: #666; text-align: center;">
+                    Password: <strong>tropical2026</strong>
+                </p>
+            </div>
+
+            <div class="admin-panel" id="adminPanel">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
+                    <h2 style="color: var(--primary);">📊 Gestione Prenotazioni</h2>
+                    <button class="btn btn-cancel" id="btnLogout">🚪 Esci</button>
+                </div>
+                <div id="bookingsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DATI
+        const STORAGE_KEY = 'sportingTropicalBookings';
+        const ADMIN_PASSWORD = 'tropical2026';
+        const WHATSAPP_NUMBER = '393394532426';
+        
+        const FIELDS = [
+            { name: 'Campo Blu', price: 70 },
+            { name: 'Campo Verde', price: 60 }
+        ];
+        
+        const TIME_SLOTS = ['19:00-20:00', '20:00-21:00', '21:00-22:00', '22:00-23:00', '23:00-24:00'];
+        
+        let bookings = [];
+        let selectedSlot = null;
+        let selectedDate = null;
+
+        // INIT
+        function init() {
+            loadBookings();
+            setupEventListeners();
+            generateDateSelector();
+            selectDate(0);
+        }
+
+        function loadBookings() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            bookings = stored ? JSON.parse(stored) : [];
+        }
+
+        function saveBookings() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+        }
+
+        // EVENT LISTENERS
+        function setupEventListeners() {
+            document.getElementById('tabBooking').addEventListener('click', () => switchTab('booking'));
+            document.getElementById('tabAdmin').addEventListener('click', () => switchTab('admin'));
+            document.getElementById('btnConfirm').addEventListener('click', confirmBooking);
+            document.getElementById('btnCancel').addEventListener('click', cancelSelection);
+            document.getElementById('btnLogin').addEventListener('click', adminLogin);
+            document.getElementById('btnLogout').addEventListener('click', adminLogout);
+            document.getElementById('customerName').addEventListener('keypress', e => {
+                if (e.key === 'Enter') confirmBooking();
+            });
+            document.getElementById('customerPhone').addEventListener('keypress', e => {
+                if (e.key === 'Enter') confirmBooking();
+            });
+        }
+
+        // TABS
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'booking') {
+                document.getElementById('tabBooking').classList.add('active');
+                document.getElementById('bookingTab').classList.add('active');
+            } else {
+                document.getElementById('tabAdmin').classList.add('active');
+                document.getElementById('adminTab').classList.add('active');
+            }
+        }
+
+        // DATE SELECTOR
+        function generateDateSelector() {
+            const container = document.getElementById('dateSelector');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                
+                const btn = document.createElement('button');
+                btn.className = 'date-btn';
+                if (i === 0) btn.classList.add('active');
+                btn.textContent = formatDate(date);
+                btn.addEventListener('click', () => selectDate(i));
+                container.appendChild(btn);
+            }
+        }
+
+        function selectDate(dayOffset) {
+            const date = new Date();
+            date.setDate(date.getDate() + dayOffset);
+            selectedDate = date.toDateString();
+            
+            document.querySelectorAll('.date-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === dayOffset);
+            });
+            
+            generateFields();
+        }
+
+        // FIELDS
+        function generateFields() {
+            const container = document.getElementById('fieldsContainer');
+            container.innerHTML = '';
+            
+            FIELDS.forEach((field, index) => {
+                const card = document.createElement('div');
+                card.className = 'field-card';
+                
+                const title = document.createElement('h3');
+                title.textContent = field.name;
+                card.appendChild(title);
+                
+                const slotsContainer = document.createElement('div');
+                slotsContainer.className = 'time-slots';
+                
+                TIME_SLOTS.forEach(timeSlot => {
+                    const slot = document.createElement('div');
+                    const isOccupied = isSlotOccupied(index, selectedDate, timeSlot);
+                    
+                    slot.className = 'time-slot ' + (isOccupied ? 'occupied' : 'free');
+                    slot.textContent = timeSlot;
+                    
+                    if (!isOccupied) {
+                        slot.addEventListener('click', () => selectSlot(index, field, timeSlot, slot));
+                    }
+                    
+                    slotsContainer.appendChild(slot);
+                });
+                
+                card.appendChild(slotsContainer);
+                container.appendChild(card);
+            });
+        }
+
+        function isSlotOccupied(fieldIndex, date, timeSlot) {
+            return bookings.some(b => 
+                b.field === fieldIndex && 
+                b.date === date && 
+                b.timeSlot === timeSlot &&
+                b.status === 'active'
+            );
+        }
+
+        function selectSlot(fieldIndex, field, timeSlot, element) {
+            document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            selectedSlot = { fieldIndex, field, timeSlot };
+            
+            document.getElementById('selectedInfo').innerHTML = `
+                <strong>Campo:</strong> ${field.name}<br>
+                <strong>Data:</strong> ${formatDate(new Date(selectedDate))}<br>
+                <strong>Orario:</strong> ${timeSlot}
+            `;
+            
+            document.getElementById('bookingForm').classList.add('active');
+            document.getElementById('bookingForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // BOOKING
+        function confirmBooking() {
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            
+            if (!name || !phone) {
+                showMessage('Compila tutti i campi', 'error');
+                return;
+            }
+            
+            if (!selectedSlot) {
+                showMessage('Seleziona un orario', 'error');
+                return;
+            }
+            
+            const booking = {
+                id: Date.now(),
+                field: selectedSlot.fieldIndex,
+                fieldName: selectedSlot.field.name,
+                price: selectedSlot.field.price,
+                date: selectedDate,
+                timeSlot: selectedSlot.timeSlot,
+                customerName: name,
+                customerPhone: phone,
+                status: 'active',
+                paid: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            bookings.push(booking);
+            saveBookings();
+            sendWhatsAppNotification(booking);
+            
+            showMessage('✅ Prenotazione confermata!', 'success');
+            
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('bookingForm').classList.remove('active');
+            selectedSlot = null;
+            
+            generateFields();
+        }
+
+        function cancelSelection() {
+            document.getElementById('bookingForm').classList.remove('active');
+            document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
+            selectedSlot = null;
+        }
+
+        function sendWhatsAppNotification(booking) {
+            const message = `🔔 NUOVA PRENOTAZIONE\n\n` +
+                          `⚽ ${booking.fieldName}\n` +
+                          `💰 €${booking.price}\n` +
+                          `📅 ${formatDate(new Date(booking.date))}\n` +
+                          `⏰ ${booking.timeSlot}\n` +
+                          `👤 ${booking.customerName}\n` +
+                          `📞 ${booking.customerPhone}`;
+            
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        // ADMIN
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminPanel').classList.add('active');
+                loadAdminBookings();
+            } else {
+                alert('Password errata!');
+            }
+        }
+
+        function adminLogout() {
+            document.getElementById('adminLogin').style.display = 'block';
+            document.getElementById('adminPanel').classList.remove('active');
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function loadAdminBookings() {
+            const container = document.getElementById('bookingsList');
+            container.innerHTML = '';
+            
+            const active = bookings.filter(b => b.status === 'active');
+            
+            if (active.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Nessuna prenotazione</p>';
+                return;
+            }
+            
+            const sorted = active.sort((a, b) => {
+                const dateCompare = new Date(a.date) - new Date(b.date);
+                if (dateCompare !== 0) return dateCompare;
+                return a.timeSlot.localeCompare(b.timeSlot);
+            });
+            
+            sorted.forEach(booking => {
+                const item = document.createElement('div');
+                item.className = 'booking-item';
+                
+                const info = document.createElement('div');
+                info.className = 'booking-info';
+                info.innerHTML = `
+                    <strong style="color: var(--primary); font-size: 1.2em;">${booking.fieldName} - €${booking.price}</strong><br>
+                    📅 ${formatDate(new Date(booking.date))} - ⏰ ${booking.timeSlot}<br>
+                    👤 ${booking.customerName} - 📞 ${booking.customerPhone}<br>
+                    💰 ${booking.paid ? '<span style="color: #10b981;">✅ Pagato</span>' : '<span style="color: #ef4444;">❌ Non pagato</span>'}
+                `;
+                
+                const actions = document.createElement('div');
+                actions.className = 'booking-actions';
+                
+                const btnPaid = document.createElement('button');
+                btnPaid.className = 'btn btn-secondary';
+                btnPaid.textContent = booking.paid ? '❌ Segna Non Pagato' : '✅ Segna Pagato';
+                btnPaid.addEventListener('click', () => togglePaid(booking.id));
+                
+                const btnDelete = document.createElement('button');
+                btnDelete.className = 'btn btn-danger';
+                btnDelete.textContent = '🗑️ Cancella';
+                btnDelete.addEventListener('click', () => deleteBooking(booking.id));
+                
+                actions.appendChild(btnPaid);
+                actions.appendChild(btnDelete);
+                
+                item.appendChild(info);
+                item.appendChild(actions);
+                container.appendChild(item);
+            });
+        }
+
+        function togglePaid(bookingId) {
+            const booking = bookings.find(b => b.id === bookingId);
+            if (booking) {
+                booking.paid = !booking.paid;
+                saveBookings();
+                loadAdminBookings();
+            }
+        }
+
+        function deleteBooking(bookingId) {
+            if (confirm('Sei sicuro di voler cancellare questa prenotazione?')) {
+                const booking = bookings.find(b => b.id === bookingId);
+                if (booking) {
+                    booking.status = 'deleted';
+                    saveBookings();
+                    loadAdminBookings();
+                    generateFields();
+                    alert('✅ Prenotazione cancellata!');
+                }
+            }
+        }
+
+        // UTILS
+        function showMessage(text, type) {
+            const container = document.getElementById('message');
+            container.textContent = text;
+            container.className = 'message ' + type;
+            setTimeout(() => {
+                container.textContent = '';
+                container.className = '';
+            }, 5000);
+        }
+
+        function formatDate(date) {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            if (date.toDateString() === today.toDateString()) return 'Oggi';
+            if (date.toDateString() === tomorrow.toDateString()) return 'Domani';
+            
+            const giorni = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+            const mesi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+            return `${giorni[date.getDay()]} ${date.getDate()} ${mesi[date.getMonth()]}`;
+        }
+
+        // START
+        init();
+    </script>
+</body>
+</html>
